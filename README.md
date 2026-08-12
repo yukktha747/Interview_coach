@@ -21,8 +21,6 @@ Built to demonstrate end-to-end agentic AI engineering: retrieval, multi-agent o
 
 ## Screenshots
 
-*(Add your own screenshots here once you have a session running — see instructions below.)*
-
 <p align="center">
   <img src="assets/Topic Selection.png" alt="Topic selection screen" width="45%"/>
 </p>
