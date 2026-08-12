@@ -1,0 +1,29 @@
+# Core LLM / agent frameworks
+crewai
+crewai-tools
+langgraph
+langchain-core
+
+# Retrieval & vector store
+llama-index
+qdrant-client
+
+# Embeddings / reranking (Jina APIs called via raw requests)
+requests
+
+# Evaluation
+ragas
+langchain-huggingface
+sentence-transformers
+
+# LLM Gateway
+litellm
+
+# Structured output / validation
+pydantic
+
+# UI
+streamlit
+
+# Utilities
+python-dotenv
