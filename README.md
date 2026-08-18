@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/Qdrant-vector%20store-2fa86a" alt="Qdrant"/>
   <img src="https://img.shields.io/badge/RAGAS-evaluation-d9534f" alt="RAGAS"/>
   <img src="https://img.shields.io/badge/Streamlit-UI-ff4b4b?logo=streamlit&logoColor=white" alt="Streamlit"/>
+  <img src="assets/ChatGPT Image Aug 18, 2026, 06_24_30 PM.png" alt="flowdiagram"/>
 </p>
 
 A multi-agent, agentic RAG system that runs live technical interview practice sessions — asks questions grounded in a real knowledge base, grades your answers against a rubric, gives actionable coaching feedback, and evaluates its own output quality automatically.
