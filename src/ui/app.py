@@ -2,12 +2,13 @@ import sys
 import os
 import json
 import uuid
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 import streamlit as st
 from langgraph.types import Command
-from pathlib import Path
+
 from src.utils.load_topics import load_topics
 from src.graph.session_graph import build_graph
 from src.utils.logging_config import get_logger
@@ -22,9 +23,7 @@ def get_app():
     return build_graph()
 
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
 DATA_DIR = PROJECT_ROOT / "data" / "questions"
 
 app = get_app()
@@ -52,6 +51,8 @@ def start_new_session():
     st.session_state.thread_id = thread_id
     st.session_state.config = {"configurable": {"thread_id": thread_id}}
     st.session_state.history = []
+    st.session_state.ragas_results = None
+    st.session_state.ragas_error = None
 
     initial_state = {
         "topic": "",
@@ -161,8 +162,6 @@ if is_paused:
 else:
     st.success("Session complete! 🎉")
     st.subheader("Summary")
-    # Filter out None scores (rounds where the Evaluator agent failed) so
-    # the average isn't computed over a mix of ints and Nones.
     scores = [r["score"] for r in st.session_state.history if r["score"] is not None]
     unscored = len(st.session_state.history) - len(scores)
     if scores:
@@ -172,9 +171,44 @@ else:
 
     with open("session_log.json", "w") as f:
         json.dump(result.get("session_log", []), f, indent=2)
-    st.caption("Session log saved to session_log.json for RAGAS evaluation.")
+    st.caption("Session log saved to session_log.json.")
+
+    st.subheader("Quality Evaluation (RAGAS)")
+    st.caption(
+        "Checks whether the Interviewer's questions and Evaluator's grading were "
+        "actually grounded in retrieved context, not hallucinated. This makes "
+        "several LLM calls and can take 30-60+ seconds."
+    )
+
+    if st.button("Run Quality Evaluation"):
+        with st.spinner("Running RAGAS evaluation — this can take a minute..."):
+            try:
+                from src.eval.ragas_eval import run_evaluation
+                ragas_results = run_evaluation("session_log.json")
+                st.session_state.ragas_results = ragas_results
+                st.session_state.ragas_error = None
+            except Exception as e:
+                logger.error(f"RAGAS evaluation failed: {e}")
+                st.session_state.ragas_results = None
+                st.session_state.ragas_error = str(e)
+        st.rerun()
+
+    if st.session_state.get("ragas_error"):
+        st.error(f"Evaluation failed: {st.session_state.ragas_error}")
+        st.caption("Check interview_coach.log for details.")
+
+    if st.session_state.get("ragas_results") is not None:
+        ragas_df = st.session_state.ragas_results.to_pandas()
+        numeric_cols = ragas_df.select_dtypes(include="number").columns
+
+        cols = st.columns(len(numeric_cols)) if len(numeric_cols) > 0 else [st]
+        for col, metric_name in zip(cols, numeric_cols):
+            avg = ragas_df[metric_name].mean()
+            col.metric(metric_name.replace("_", " ").title(), f"{avg:.2f}")
+
+        with st.expander("Per-sample breakdown"):
+            st.dataframe(ragas_df)
 
     if st.button("Start another session"):
         start_new_session()
         st.rerun()
-        
